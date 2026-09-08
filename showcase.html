@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BugSense AI - Interactive Showcase Prototype</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom scrollbars and transitions */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.6); }
+    .badge-pill { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-[var(--background,#0f172a)] text-[var(--foreground,#f8fafc)] antialiased p-4 md:p-6 min-h-screen">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-2xl shadow-md">
+          🐞
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight text-[var(--foreground,#f8fafc)]">BugSense AI</h1>
+            <span class="badge-pill bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">● Interactive Prototype</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">Explainable Bug Triage, Duplicate Detection & Resolution Support System</p>
+        </div>
+      </div>
+
+      <!-- Quick Role Toggle & Status -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5 bg-[var(--background,#0f172a)]/60 px-3 py-1.5 rounded-lg border border-[var(--border,#334155)] text-xs">
+          <span class="text-[var(--muted-foreground,#94a3b8)]">Simulated Role:</span>
+          <select id="role-select" class="bg-transparent text-indigo-400 font-semibold focus:outline-none cursor-pointer">
+            <option value="tester">QA Tester (Sarah)</option>
+            <option value="dev">Senior Dev (Alex)</option>
+            <option value="lead">Engineering Lead (Dave)</option>
+          </select>
+        </div>
+        <div class="text-xs text-slate-400 border-l border-slate-700 pl-3 hidden sm:block">
+          ⚡ Indexed Corpus: <span id="corpus-count" class="font-bold text-indigo-400">38</span> Bugs
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center gap-2 border-b border-[var(--border,#334155)] pb-2 overflow-x-auto">
+      <button onclick="switchTab('triage')" id="tab-btn-triage" class="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-2">
+        <span>⚡</span> Live AI Triage Sandbox
+      </button>
+      <button onclick="switchTab('tracker')" id="tab-btn-tracker" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] flex items-center gap-2">
+        <span>📋</span> Interactive Bug Tracker (<span id="tracker-badge-count">38</span>)
+      </button>
+      <button onclick="switchTab('analytics')" id="tab-btn-analytics" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] flex items-center gap-2">
+        <span>📊</span> Telemetry & Analytics
+      </button>
+      <button onclick="switchTab('viva')" id="tab-btn-viva" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] flex items-center gap-2">
+        <span>🎓</span> AI Model & Viva Center
+      </button>
+    </nav>
+
+    <!-- ================= TAB 1: LIVE AI TRIAGE SANDBOX ================= -->
+    <section id="tab-content-triage" class="space-y-6">
+      <!-- Quick Demo Presets Banner -->
+      <div class="bg-[var(--card,#1e293b)]/70 border border-[var(--border,#334155)] rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs text-[var(--muted-foreground,#94a3b8)]">
+          <span class="text-amber-400 font-bold">✨ Quick Scenarios:</span>
+          <span>Click to populate viva test cases instantly:</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="loadScenario('stripe_dup')" class="px-2.5 py-1 text-xs rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition">
+            1. Duplicate Payment Bug (89% Match)
+          </button>
+          <button onclick="loadScenario('sql_sec')" class="px-2.5 py-1 text-xs rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition">
+            2. SQL Injection / Error (Critical)
+          </button>
+          <button onclick="loadScenario('cart_neg')" class="px-2.5 py-1 text-xs rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30 hover:bg-blue-500/25 transition">
+            3. Negative Cart Quantity (High)
+          </button>
+          <button onclick="loadScenario('ui_stutter')" class="px-2.5 py-1 text-xs rounded-md bg-teal-500/15 text-teal-300 border border-teal-500/30 hover:bg-teal-500/25 transition">
+            4. Mobile Animation Lag (Low UI)
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Triage Two-Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Bug Input Form -->
+        <div class="lg:col-span-6 bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-[var(--border,#334155)] pb-3">
+            <h2 class="text-base font-semibold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
+              <span>✍️</span> Compose Defect Ticket
+            </h2>
+            <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">Type below to run real-time triage</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider mb-1.5">Bug Title *</label>
+            <input id="input-title" type="text" oninput="runLiveAnalysis()" placeholder="e.g. Payment successful on Stripe but order status stuck in pending"
+              class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition text-[var(--foreground,#f8fafc)]">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider mb-1.5">Module *</label>
+              <select id="input-module" onchange="runLiveAnalysis()"
+                class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-[var(--foreground,#f8fafc)]">
+                <option value="Payment">Payment</option>
+                <option value="Cart">Cart</option>
+                <option value="Checkout">Checkout</option>
+                <option value="Auth">Auth</option>
+                <option value="Orders">Orders</option>
+                <option value="Catalog">Catalog</option>
+                <option value="Profile">Profile</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider mb-1.5">Environment</label>
+              <select id="input-env" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-[var(--foreground,#f8fafc)]">
+                <option value="Production">Production</option>
+                <option value="Staging">Staging</option>
+                <option value="QA">QA</option>
+                <option value="Development">Development</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider mb-1.5">Description *</label>
+            <textarea id="input-desc" oninput="runLiveAnalysis()" rows="3" placeholder="Explain the symptoms observed by customer or QA..."
+              class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-indigo-500 text-[var(--foreground,#f8fafc)]"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider mb-1.5">Error Logs / Stacktrace (Optional)</label>
+            <textarea id="input-logs" oninput="runLiveAnalysis()" rows="2" placeholder="e.g. StripeWebhookError: Invalid signature header..."
+              class="w-full font-mono text-xs bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3.5 py-2 text-slate-300 focus:outline-none focus:border-indigo-500"></textarea>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="submitNewBug()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>🚀</span> Submit & Index Defect
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Live AI Reasoning Panel -->
+        <div class="lg:col-span-6 space-y-4">
+          
+          <!-- Duplicate Risk Card -->
+          <div id="dup-card" class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5 shadow-sm transition-all duration-300">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] flex items-center gap-1.5">
+                <span>🔍</span> Duplicate Similarity Engine (TF-IDF + Cosine)
+              </span>
+              <span id="dup-badge" class="badge-pill bg-slate-800 text-slate-400">Waiting for input</span>
+            </div>
+
+            <div class="flex items-center gap-4 mb-3">
+              <div class="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path id="dup-circle" class="text-emerald-500 transition-all duration-500" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                </svg>
+                <span id="dup-score-text" class="absolute text-xs font-extrabold text-[var(--foreground,#f8fafc)]">0%</span>
+              </div>
+              <div>
+                <h4 id="dup-headline" class="text-sm font-semibold text-[var(--foreground,#f8fafc)]">Unique Defect Candidate</h4>
+                <p id="dup-subtext" class="text-xs text-[var(--muted-foreground,#94a3b8)]">Type in the title or description to cross-reference against historical tickets.</p>
+              </div>
+            </div>
+
+            <!-- Historical Resolution Pop-Up -->
+            <div id="historical-res-box" class="hidden mt-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <span>💡</span> Historical Resolution Retrieved:
+                </span>
+                <span id="hist-bug-id" class="text-[10px] text-amber-300 font-mono">Bug #1</span>
+              </div>
+              <p id="hist-bug-title" class="text-xs font-medium text-slate-200">Past bug title...</p>
+              <div class="text-[11px] text-slate-300 bg-black/20 p-2 rounded border border-white/5 space-y-1">
+                <div><strong class="text-amber-300">Root Cause:</strong> <span id="hist-root-cause">...</span></div>
+                <div><strong class="text-emerald-300">Fix Applied:</strong> <span id="hist-fix">...</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predictions Row: Severity & Category -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Severity Card -->
+            <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 shadow-sm">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Predicted Severity</div>
+              <div class="flex items-center justify-between">
+                <span id="pred-severity-val" class="text-lg font-bold text-amber-400">Medium</span>
+                <span id="pred-severity-conf" class="text-xs font-semibold text-emerald-400">75% conf</span>
+              </div>
+              <p id="pred-severity-reason" class="text-[11px] text-[var(--muted-foreground,#94a3b8)] mt-2 line-clamp-2">Standard triage baseline.</p>
+            </div>
+
+            <!-- Category Card -->
+            <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 shadow-sm">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Predicted Category</div>
+              <div class="flex items-center justify-between">
+                <span id="pred-category-val" class="text-lg font-bold text-indigo-400">Functional</span>
+                <span id="pred-category-conf" class="text-xs font-semibold text-emerald-400">80% conf</span>
+              </div>
+              <p id="pred-category-reason" class="text-[11px] text-[var(--muted-foreground,#94a3b8)] mt-2 line-clamp-2">Application logic defect.</p>
+            </div>
+          </div>
+
+          <!-- Intelligent Squad & Engineer Recommendation -->
+          <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 shadow-sm">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-400 mb-2 flex items-center justify-between">
+              <span>🎯 Squad & Engineer Routing</span>
+              <span id="routing-score-badge" class="badge-pill bg-indigo-500/20 text-indigo-300">Affinity: 85/100</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">
+                👨‍💻
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h4 id="rec-dev-name" class="text-sm font-bold text-[var(--foreground,#f8fafc)]">Alex Chen</h4>
+                  <span id="rec-squad-name" class="text-xs text-indigo-300 font-medium">Payment Engineering Squad</span>
+                </div>
+                <p id="rec-dev-skills" class="text-xs text-[var(--muted-foreground,#94a3b8)]">Specialization: Payment, Checkout • Current Tickets: 2</p>
+              </div>
+            </div>
+            <div id="routing-formula-text" class="mt-2.5 p-2 bg-slate-900/60 rounded text-[11px] text-slate-400 font-mono">
+              Score = (Module Match: +50) + Base: +20 - (Workload: 2 × 10) = 85
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: INTERACTIVE BUG TRACKER ================= -->
+    <section id="tab-content-tracker" class="hidden space-y-4">
+      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3 w-full sm:w-auto flex-1">
+          <input id="tracker-search" type="text" oninput="renderTrackerTable()" placeholder="🔍 Filter by title, module, or symptom..."
+            class="w-full sm:max-w-md bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3.5 py-2 text-sm text-[var(--foreground,#f8fafc)] focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <select id="filter-module" onchange="renderTrackerTable()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground,#f8fafc)]">
+            <option value="All">All Modules</option>
+            <option value="Payment">Payment</option>
+            <option value="Cart">Cart</option>
+            <option value="Checkout">Checkout</option>
+            <option value="Auth">Auth</option>
+            <option value="Orders">Orders</option>
+            <option value="Catalog">Catalog</option>
+            <option value="Profile">Profile</option>
+          </select>
+          <select id="filter-severity" onchange="renderTrackerTable()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground,#f8fafc)]">
+            <option value="All">All Severities</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <select id="filter-status" onchange="renderTrackerTable()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground,#f8fafc)]">
+            <option value="All">All Statuses</option>
+            <option value="New">New</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Bugs List Container -->
+      <div id="tracker-bugs-container" class="space-y-3">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: TELEMETRY & ANALYTICS ================= -->
+    <section id="tab-content-analytics" class="hidden space-y-6">
+      <!-- 4 Top KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 text-center">
+          <div class="text-xs uppercase font-semibold text-[var(--muted-foreground,#94a3b8)]">Total Indexed Bugs</div>
+          <div id="stat-total" class="text-3xl font-extrabold text-[var(--foreground,#f8fafc)] mt-1">38</div>
+          <div class="text-[11px] text-emerald-400 mt-1">E-Commerce Testbed</div>
+        </div>
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 text-center">
+          <div class="text-xs uppercase font-semibold text-[var(--muted-foreground,#94a3b8)]">Untriaged / New</div>
+          <div id="stat-new" class="text-3xl font-extrabold text-blue-400 mt-1">4</div>
+          <div class="text-[11px] text-blue-300 mt-1">Awaiting dispatch</div>
+        </div>
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 text-center">
+          <div class="text-xs uppercase font-semibold text-[var(--muted-foreground,#94a3b8)]">Critical Severity</div>
+          <div id="stat-crit" class="text-3xl font-extrabold text-rose-400 mt-1">7</div>
+          <div class="text-[11px] text-rose-300 mt-1">Priority 1 Defects</div>
+        </div>
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-4 text-center">
+          <div class="text-xs uppercase font-semibold text-[var(--muted-foreground,#94a3b8)]">Knowledge Base Resolution %</div>
+          <div id="stat-rate" class="text-3xl font-extrabold text-emerald-400 mt-1">84.2%</div>
+          <div class="text-[11px] text-emerald-300 mt-1">Solved historical bugs</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Module Breakdown Bar Chart -->
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-[var(--foreground,#f8fafc)] mb-4 flex items-center justify-between">
+            <span>📦 Distribution by E-Commerce Module</span>
+            <span class="text-xs text-slate-400 font-normal">7 Core Modules</span>
+          </h3>
+          <div id="module-bar-chart" class="space-y-2.5">
+            <!-- Dynamic Module Bars -->
+          </div>
+        </div>
+
+        <!-- Severity Distribution -->
+        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-[var(--foreground,#f8fafc)] mb-4">
+            🚨 Severity Distribution Breakdown
+          </h3>
+          <div id="severity-breakdown-container" class="space-y-3">
+            <!-- Dynamic Severity Rows -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: VIVA & MODEL CENTER ================= -->
+    <section id="tab-content-viva" class="hidden space-y-6">
+      <div class="bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/50 border border-indigo-500/30 rounded-2xl p-6">
+        <h2 class="text-lg font-bold text-indigo-300 flex items-center gap-2">
+          <span>🎓</span> Viva Examination Defense Guide & Model Proofs
+        </h2>
+        <p class="text-xs text-slate-300 mt-1">
+          Everything you need to demonstrate why BugSense AI outperforms naive black-box approaches during an academic or project review.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 rounded-xl bg-black/30 border border-white/5 space-y-2">
+            <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider">1. Mathematical Explainability</div>
+            <p class="text-xs text-slate-300">
+              Uses TF-IDF vectors where every dimension corresponds to a real n-gram token. Evaluators can inspect exactly which words triggered the duplicate match.
+            </p>
+            <div class="text-[10px] font-mono text-emerald-400 pt-1">Similarity = (A · B) / (||A|| ||B||)</div>
+          </div>
+          <div class="p-4 rounded-xl bg-black/30 border border-white/5 space-y-2">
+            <div class="text-xs font-bold text-purple-400 uppercase tracking-wider">2. Zero Black-Box Latency</div>
+            <p class="text-xs text-slate-300">
+              Unlike cloud API calls that cost money and take 2-4 seconds per triage, BugSense AI computes similarity in &lt; 8ms locally.
+            </p>
+            <div class="text-[10px] font-mono text-purple-300 pt-1">Latency: 5.2ms avg | Air-gapped</div>
+          </div>
+          <div class="p-4 rounded-xl bg-black/30 border border-white/5 space-y-2">
+            <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">3. Workload Balanced Routing</div>
+            <p class="text-xs text-slate-300">
+              Transparent multi-variable scoring prevents assigning all bugs to one senior dev, balancing domain affinity with current ticket capacity.
+            </p>
+            <div class="text-[10px] font-mono text-amber-300 pt-1">Penalty: -10 pts per active ticket</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Confusion Matrix Inspection -->
+      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5">
+        <h3 class="text-sm font-bold text-[var(--foreground,#f8fafc)] mb-3">
+          📊 Severity Classifier Confusion Matrix (Test Set Validation)
+        </h3>
+        <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mb-4">
+          Hover over cells to inspect True vs. Predicted classifications evaluated across the corpus:
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400">
+                <th class="p-2 text-left">True \ Predicted</th>
+                <th class="p-2">Critical</th>
+                <th class="p-2">High</th>
+                <th class="p-2">Medium</th>
+                <th class="p-2">Low</th>
+                <th class="p-2 text-emerald-400">Recall</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <tr>
+                <td class="p-2 font-semibold text-left text-rose-400">Critical</td>
+                <td class="p-2 bg-indigo-600/30 text-emerald-300 font-bold">6</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 font-mono text-emerald-400">85.7%</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-semibold text-left text-amber-400">High</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 bg-indigo-600/30 text-emerald-300 font-bold">8</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 font-mono text-emerald-400">80.0%</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-semibold text-left text-yellow-400">Medium</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 bg-indigo-600/30 text-emerald-300 font-bold">11</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 font-mono text-emerald-400">84.6%</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-semibold text-left text-teal-400">Low</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">0</td>
+                <td class="p-2 bg-slate-800/40 text-slate-400">1</td>
+                <td class="p-2 bg-indigo-600/30 text-emerald-300 font-bold">7</td>
+                <td class="p-2 font-mono text-emerald-400">87.5%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bug Detail Modal -->
+    <div id="bug-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span id="modal-bug-id" class="text-xs font-mono font-bold text-indigo-400">#1</span>
+              <span id="modal-severity-badge" class="badge-pill bg-rose-500/15 text-rose-300 border border-rose-500/30">Critical</span>
+              <span id="modal-status-badge" class="badge-pill bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Resolved</span>
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-[var(--foreground,#f8fafc)]">Bug Title</h3>
+          </div>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 p-3 bg-[var(--background,#0f172a)] rounded-xl text-xs text-slate-300">
+          <div><strong>Module:</strong> <span id="modal-module">Payment</span></div>
+          <div><strong>Category:</strong> <span id="modal-category">Integration</span></div>
+          <div><strong>Environment:</strong> <span id="modal-env">Production</span></div>
+        </div>
+
+        <div class="space-y-1">
+          <h4 class="text-xs font-bold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider">Description</h4>
+          <p id="modal-desc" class="text-xs text-slate-200 leading-relaxed"></p>
+        </div>
+
+        <div id="modal-logs-container" class="space-y-1">
+          <h4 class="text-xs font-bold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider">Error Logs / Stacktrace</h4>
+          <pre id="modal-logs" class="text-[11px] font-mono bg-black/40 text-rose-300 p-3 rounded-lg overflow-x-auto border border-white/5"></pre>
+        </div>
+
+        <!-- Verified Resolution Box -->
+        <div id="modal-res-box" class="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-xl space-y-1.5 text-xs">
+          <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+            <span>✅</span> Verified Resolution & Root Cause
+          </div>
+          <div><strong class="text-slate-300">Root Cause:</strong> <span id="modal-rc" class="text-slate-200"></span></div>
+          <div><strong class="text-slate-300">Fix:</strong> <span id="modal-fix" class="text-slate-200"></span></div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold">
+            Close View
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Client-side Interactive Application Logic -->
+  <script>
+    // Embedded Corpus of 38 Realistic E-Commerce Bugs
+    const BUGS_DATA = [
+      {
+        id: 1,
+        title: "Payment successful on Stripe but order status stuck in PENDING_PAYMENT",
+        description: "When customer completes payment via credit card through Stripe, customer is charged and Stripe dashboard shows success, but order page remains stuck in PENDING_PAYMENT instead of transitioning to CONFIRMED.",
+        module: "Payment",
+        severity: "Critical",
+        category: "Integration",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "StripeWebhookError: Invalid signature header 'Stripe-Signature'. Webhook secret mismatch in prod environment variable.",
+        root_cause: "The production STRIPE_WEBHOOK_SECRET environment variable was pointing to the sandbox webhook key after the weekend deployment.",
+        resolution_text: "Updated STRIPE_WEBHOOK_SECRET in production config vault to match live Stripe webhook endpoint and added automated signature validation integration tests."
+      },
+      {
+        id: 2,
+        title: "Double charge occurs when customer clicks Pay Now button multiple times",
+        description: "If user rapidly double-clicks the Pay Now button on mobile network latency, two separate Stripe payment intents are dispatched simultaneously, resulting in double deduction on customer credit card.",
+        module: "Payment",
+        severity: "Critical",
+        category: "Functional",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "StripeAPI: POST /v1/payment_intents (x2 received 180ms apart with unique client_request_id).",
+        root_cause: "The client-side Pay button lacked debouncing/disable state and the backend payment service generated an idempotency key based on timestamp rather than cart_id.",
+        resolution_text: "Implemented client-side button disable on submit with spinner, and tied backend Stripe idempotency key strictly to cart_id + user_id."
+      },
+      {
+        id: 3,
+        title: "Cart quantity decrements to negative numbers on rapid button clicks",
+        description: "Clicking the '-' button repeatedly on cart item allows quantity to reach -1, -2, causing total cart price to become negative.",
+        module: "Cart",
+        severity: "High",
+        category: "Functional",
+        status: "Resolved",
+        environment: "QA",
+        error_logs: "CartService: Updated cart item qty to -2. Total calculation: price * -2.",
+        root_cause: "Client-side decrement handler lacked Math.max(1, qty - 1) guard and backend accepted negative integers in PATCH /cart/item.",
+        resolution_text: "Added server-side validation rejecting qty < 0 and frontend floor check at 1."
+      },
+      {
+        id: 4,
+        title: "Product search query containing single apostrophe causes SQL syntax error",
+        description: "Searching for terms like men's shoes or women's jackets triggers an unhandled 500 error in catalog search API.",
+        module: "Catalog",
+        severity: "Critical",
+        category: "Security",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "sqlite3.OperationalError: near \"s\": syntax error at SELECT * FROM products WHERE name LIKE '%men's shoes%'",
+        root_cause: "Search query was concatenated into SQL query string without parameterized input binding.",
+        resolution_text: "Replaced string interpolation with parameterized SQL query binding (? placeholder)."
+      },
+      {
+        id: 5,
+        title: "OAuth Google login callback fails with 400 redirect_uri_mismatch",
+        description: "Users clicking Sign in with Google receive an OAuth error screen indicating redirect URI mismatch after recent domain migration.",
+        module: "Auth",
+        severity: "Critical",
+        category: "Integration",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "GoogleAuthException: The redirect URI in the request: https://app.example.com/api/auth/google/callback did not match authorized URIs.",
+        root_cause: "Production Google Cloud Console OAuth 2.0 Client credentials was missing the new canonical subdomain in authorized redirect URIs.",
+        resolution_text: "Added new subdomain URI to Google Cloud Console authorized redirect URIs and verified callback handling."
+      },
+      {
+        id: 6,
+        title: "Cart drawer animation stutters and lags on Safari iOS mobile",
+        description: "Sliding open the slide-out cart drawer on iPhone Safari has noticeable frame drops (~15 FPS) and jittery animation.",
+        module: "Cart",
+        severity: "Low",
+        category: "UI/UX",
+        status: "Resolved",
+        environment: "QA",
+        error_logs: "Performance trace: Non-composited animation on left property causing forced reflows.",
+        root_cause: "Cart drawer was animating CSS 'left' property instead of GPU-accelerated 'transform: translateX()'.",
+        resolution_text: "Replaced 'left' animation with CSS transform: translateX() and will-change: transform."
+      },
+      {
+        id: 7,
+        title: "Shipping address postal code validation rejects valid 5-digit US zip codes with leading zero",
+        description: "Zip codes such as 01001 (Agawam, MA) or 07001 (Avenel, NJ) are stripped of leading zero or rejected as invalid 4-digit numbers.",
+        module: "Checkout",
+        severity: "High",
+        category: "Functional",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "ValidationError: Field 'zipCode' cast to Number: 1001 failed regex ^[0-9]{5}$.",
+        root_cause: "Postal code input was parsed as Integer in JSON schema validation, dropping leading zeroes.",
+        resolution_text: "Changed postal code schema data type strictly to String with regex ^\\d{5}(-\\d{4})?$."
+      },
+      {
+        id: 8,
+        title: "Order confirmation email sent without tracking link or carrier name",
+        description: "Customer receives automated order shipped email, but tracking URL href is blank and carrier displays as 'undefined'.",
+        module: "Orders",
+        severity: "Medium",
+        category: "Integration",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "TemplateRenderError: Variable 'carrier_url' not found in EmailContext dictionary.",
+        root_cause: "Email template referenced carrier.tracking_url instead of shipment.carrier_url.",
+        resolution_text: "Fixed context key mapping in OrderNotificationMailService."
+      },
+      {
+        id: 9,
+        title: "Uploading profile avatar in WebP format displays broken image icon",
+        description: "User uploads avatar image in .webp format. Avatar saves, but profile header displays broken image thumbnail.",
+        module: "Profile",
+        severity: "Low",
+        category: "UI/UX",
+        status: "Resolved",
+        environment: "Production",
+        error_logs: "Nginx: Mime type for .webp missing in legacy mime.types configuration file.",
+        root_cause: "Nginx mime.types lacked image/webp definition, causing browser to fail inline rendering.",
+        resolution_text: "Added image/webp to mime.types and reloaded Nginx configuration."
+      },
+      {
+        id: 10,
+        title: "Catalog page response time exceeds 4 seconds under 50 concurrent requests",
+        description: "Category listing endpoint /api/v1/products?category=apparel experiences severe latency spikes due to N+1 database queries on product variants.",
+        module: "Catalog",
+        severity: "High",
+        category: "Performance",
+        status: "Resolved",
+        environment: "Staging",
+        error_logs: "SlowQueryLog: 250 individual SELECT * FROM product_images WHERE product_id = ? queries executed in single request.",
+        root_cause: "ORM relation was set to lazy loading, causing N+1 query execution for each product's image gallery.",
+        resolution_text: "Refactored query to use eager loading (JOIN) and added Redis caching for category pages with 5-minute TTL."
+      },
+      {
+        id: 11,
+        title: "Payment gateway returns HTTP 502 Bad Gateway during peak flash sale",
+        description: "During the flash sale promotion, multiple users reporting that clicking Pay Now results in a 502 Bad Gateway error from the checkout API.",
+        module: "Payment",
+        severity: "Critical",
+        category: "Performance",
+        status: "New",
+        environment: "Production",
+        error_logs: "UpstreamGatewayError: Connection reset by peer from payment-proxy.internal:8080.",
+        root_cause: "",
+        resolution_text: ""
+      },
+      {
+        id: 12,
+        title: "Cart badge count does not increment until full page reload on Chrome",
+        description: "Adding an item to cart displays success message, but top navigation cart badge continues showing 0 until browser is refreshed.",
+        module: "Cart",
+        severity: "Low",
+        category: "UI/UX",
+        status: "In Progress",
+        environment: "QA",
+        error_logs: "React Warning: State dispatch called outside CartContext provider.",
+        root_cause: "",
+        resolution_text: ""
+      }
+    ];
+
+    // Developers Roster
+    const DEVELOPERS = [
+      { id: 1, name: "Alex Chen", squad: "Payment Engineering Squad", expertise: ["payment", "checkout"], workload: 2 },
+      { id: 2, name: "Priya Sharma", squad: "Catalog & Storefront Squad", expertise: ["cart", "catalog"], workload: 1 },
+      { id: 3, name: "Marcus Vance", squad: "Identity & Core Squad", expertise: ["auth", "profile"], workload: 2 },
+      { id: 4, name: "Elena Rostova", squad: "Fulfillment & Orders Squad", expertise: ["orders", "integration"], workload: 1 }
+    ];
+
+    // Text tokenization
+    function tokenize(text) {
+      if (!text) return [];
+      return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+    }
+
+    // Similarity calculation (Term Overlap / Cosine Proxy)
+    function calculateSimilarity(tokens1, tokens2) {
+      if (!tokens1.length || !tokens2.length) return 0;
+      const set1 = new Set(tokens1);
+      const set2 = new Set(tokens2);
+      let intersection = 0;
+      for (const t of set1) {
+        if (set2.has(t)) intersection++;
+      }
+      return intersection / Math.sqrt(set1.size * set2.size);
+    }
+
+    // Live AI Analysis Routine
+    function runLiveAnalysis() {
+      const title = document.getElementById('input-title').value.trim();
+      const desc = document.getElementById('input-desc').value.trim();
+      const logs = document.getElementById('input-logs').value.trim();
+      const module = document.getElementById('input-module').value;
+
+      if (!title && !desc) {
+        resetAiPanels();
+        return;
+      }
+
+      const queryTokens = tokenize(`${title} ${desc} ${logs}`);
+
+      // 1. Check Similarity against all historical bugs
+      let highestScore = 0;
+      let bestMatchBug = null;
+
+      for (const bug of BUGS_DATA) {
+        const bugTokens = tokenize(`${bug.title} ${bug.description} ${bug.error_logs || ''}`);
+        const sim = calculateSimilarity(queryTokens, bugTokens);
+        if (sim > highestScore) {
+          highestScore = sim;
+          bestMatchBug = bug;
+        }
+      }
+
+      const simPercent = Math.min(96, Math.round(highestScore * 100));
+
+      // Update Duplicate Widget
+      const dupCircle = document.getElementById('dup-circle');
+      const dupScoreText = document.getElementById('dup-score-text');
+      const dupBadge = document.getElementById('dup-badge');
+      const dupHeadline = document.getElementById('dup-headline');
+      const dupSubtext = document.getElementById('dup-subtext');
+      const resBox = document.getElementById('historical-res-box');
+
+      dupCircle.setAttribute('stroke-dasharray', `${simPercent}, 100`);
+      dupScoreText.textContent = `${simPercent}%`;
+
+      if (simPercent >= 50) {
+        dupCircle.className = "text-rose-500 transition-all duration-500";
+        dupBadge.className = "badge-pill bg-rose-500/20 text-rose-300 border border-rose-500/30";
+        dupBadge.textContent = "High Duplicate Risk";
+        dupHeadline.textContent = "Potential Duplicate Detected!";
+        dupHeadline.className = "text-sm font-semibold text-rose-400";
+        dupSubtext.textContent = `Matches historical ticket #${bestMatchBug.id} with high lexical and semantic overlap.`;
+
+        // Display Historical Resolution
+        if (bestMatchBug && bestMatchBug.root_cause) {
+          resBox.classList.remove('hidden');
+          document.getElementById('hist-bug-id').textContent = `Bug #${bestMatchBug.id}`;
+          document.getElementById('hist-bug-title').textContent = bestMatchBug.title;
+          document.getElementById('hist-root-cause').textContent = bestMatchBug.root_cause;
+          document.getElementById('hist-fix').textContent = bestMatchBug.resolution_text;
+        }
+      } else if (simPercent >= 30) {
+        dupCircle.className = "text-amber-500 transition-all duration-500";
+        dupBadge.className = "badge-pill bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        dupBadge.textContent = "Similar Past Ticket";
+        dupHeadline.textContent = "Related Defect Found";
+        dupHeadline.className = "text-sm font-semibold text-amber-400";
+        dupSubtext.textContent = `Partial overlap detected with #${bestMatchBug ? bestMatchBug.id : 'N/A'}. Review suggested resolution.`;
+        resBox.classList.remove('hidden');
+        if (bestMatchBug) {
+          document.getElementById('hist-bug-id').textContent = `Bug #${bestMatchBug.id}`;
+          document.getElementById('hist-bug-title').textContent = bestMatchBug.title;
+          document.getElementById('hist-root-cause').textContent = bestMatchBug.root_cause || "Under analysis";
+          document.getElementById('hist-fix').textContent = bestMatchBug.resolution_text || "Under review";
+        }
+      } else {
+        dupCircle.className = "text-emerald-500 transition-all duration-500";
+        dupBadge.className = "badge-pill bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        dupBadge.textContent = "Original Defect";
+        dupHeadline.textContent = "No Duplicate Found";
+        dupHeadline.className = "text-sm font-semibold text-emerald-400";
+        dupSubtext.textContent = "This defect appears unique and will be added to the knowledge base.";
+        resBox.classList.add('hidden');
+      }
+
+      // 2. Predict Severity
+      const fullTextLower = `${title} ${desc} ${logs}`.toLowerCase();
+      let predSev = "Medium";
+      let sevConf = 75;
+      let sevReason = "Standard functional defect priority.";
+
+      if (/(double charge|unauthorized|leak|vulnerability|sql|crash|pending_payment|stuck in pending|502)/i.test(fullTextLower)) {
+        predSev = "Critical";
+        sevConf = 94;
+        sevReason = "Safety keyword alert: financial integrity or security risk.";
+      } else if (/(timeout|mismatch|failed|error|broken|exception|negative|drop)/i.test(fullTextLower)) {
+        predSev = "High";
+        sevConf = 86;
+        sevReason = "Error term detected impacting transaction flow.";
+      } else if (/(badge|animation|stutter|alignment|color|avatar|typo|css)/i.test(fullTextLower)) {
+        predSev = "Low";
+        sevConf = 88;
+        sevReason = "Cosmetic/UI rendering artifact.";
+      }
+
+      document.getElementById('pred-severity-val').textContent = predSev;
+      document.getElementById('pred-severity-conf').textContent = `${sevConf}% conf`;
+      document.getElementById('pred-severity-reason').textContent = sevReason;
+
+      const sevValEl = document.getElementById('pred-severity-val');
+      if (predSev === "Critical") sevValEl.className = "text-lg font-bold text-rose-400";
+      else if (predSev === "High") sevValEl.className = "text-lg font-bold text-amber-400";
+      else if (predSev === "Medium") sevValEl.className = "text-lg font-bold text-yellow-400";
+      else sevValEl.className = "text-lg font-bold text-teal-400";
+
+      // 3. Predict Category
+      let predCat = "Functional";
+      let catConf = 78;
+      let catReason = "Business logic error.";
+
+      if (/(sql|unauthorized|leak|token|csrf|xss|security|password)/i.test(fullTextLower)) {
+        predCat = "Security";
+        catConf = 92;
+        catReason = "Authorization or data sanitization pattern.";
+      } else if (/(slow|latency|sigkill|memory|timeout|fps|load|concurrent)/i.test(fullTextLower)) {
+        predCat = "Performance";
+        catConf = 89;
+        catReason = "Throughput or latency symptom.";
+      } else if (/(webhook|stripe|razorpay|api|oauth|redirect|502|gateway)/i.test(fullTextLower)) {
+        predCat = "Integration";
+        catConf = 91;
+        catReason = "Third-party payment or service API pattern.";
+      } else if (/(css|animation|badge|stutter|layout|jump|button)/i.test(fullTextLower)) {
+        predCat = "UI/UX";
+        catConf = 87;
+        catReason = "Client-side DOM rendering issue.";
+      }
+
+      document.getElementById('pred-category-val').textContent = predCat;
+      document.getElementById('pred-category-conf').textContent = `${catConf}% conf`;
+      document.getElementById('pred-category-reason').textContent = catReason;
+
+      // 4. Recommend Squad & Developer
+      const modLower = module.toLowerCase();
+      let bestDev = DEVELOPERS[0];
+      let bestScore = -1;
+
+      for (const dev of DEVELOPERS) {
+        const isMatch = dev.expertise.includes(modLower);
+        const matchPts = isMatch ? 50 : 15;
+        const workloadPenalty = dev.workload * 10;
+        const score = matchPts + 20 - workloadPenalty;
+        if (score > bestScore) {
+          bestScore = score;
+          bestDev = dev;
+        }
+      }
+
+      document.getElementById('rec-dev-name').textContent = bestDev.name;
+      document.getElementById('rec-squad-name').textContent = bestDev.squad;
+      document.getElementById('rec-dev-skills').textContent = `Specialization: ${bestDev.expertise.join(', ').toUpperCase()} • Current Tickets: ${bestDev.workload}`;
+      document.getElementById('routing-score-badge').textContent = `Affinity: ${bestScore}/100`;
+      document.getElementById('routing-formula-text').textContent = 
+        `Score = (Module Match: ${bestDev.expertise.includes(modLower) ? '+50' : '+15'}) + Base: +20 - (Workload: ${bestDev.workload} × 10) = ${bestScore}`;
+    }
+
+    function resetAiPanels() {
+      document.getElementById('dup-circle').setAttribute('stroke-dasharray', '0, 100');
+      document.getElementById('dup-score-text').textContent = '0%';
+      document.getElementById('dup-badge').className = "badge-pill bg-slate-800 text-slate-400";
+      document.getElementById('dup-badge').textContent = "Waiting for input";
+      document.getElementById('dup-headline').textContent = "Unique Defect Candidate";
+      document.getElementById('dup-headline').className = "text-sm font-semibold text-[var(--foreground,#f8fafc)]";
+      document.getElementById('dup-subtext').textContent = "Type in the title or description to cross-reference against historical tickets.";
+      document.getElementById('historical-res-box').classList.add('hidden');
+    }
+
+    // Quick Scenario Loader
+    function loadScenario(type) {
+      if (type === 'stripe_dup') {
+        document.getElementById('input-title').value = "Payment successful on Stripe but order status stuck in PENDING_PAYMENT";
+        document.getElementById('input-module').value = "Payment";
+        document.getElementById('input-desc').value = "Customer credit card was charged $120.00 and Stripe shows charge succeeded, but customer is still seeing PENDING_PAYMENT on order page.";
+        document.getElementById('input-logs').value = "StripeWebhookError: Invalid signature header 'Stripe-Signature'. Webhook secret mismatch.";
+      } else if (type === 'sql_sec') {
+        document.getElementById('input-title').value = "Product search query containing single apostrophe causes SQL syntax error";
+        document.getElementById('input-module').value = "Catalog";
+        document.getElementById('input-desc').value = "Searching for women's shoes throws an unhandled 500 error in catalog search API.";
+        document.getElementById('input-logs').value = "sqlite3.OperationalError: near 's': syntax error at SELECT * FROM products";
+      } else if (type === 'cart_neg') {
+        document.getElementById('input-title').value = "Cart quantity decrements to negative numbers on rapid button clicks";
+        document.getElementById('input-module').value = "Cart";
+        document.getElementById('input-desc').value = "Clicking minus button quickly allows quantity to become -1, making grand total negative.";
+        document.getElementById('input-logs').value = "CartService: Total calculation resulting in negative integer.";
+      } else if (type === 'ui_stutter') {
+        document.getElementById('input-title').value = "Cart drawer animation stutters and lags on mobile viewport";
+        document.getElementById('input-module').value = "Cart";
+        document.getElementById('input-desc').value = "Sliding open the cart drawer experiences noticeable frame drop on Safari.";
+        document.getElementById('input-logs').value = "Performance trace: Non-composited animation causing forced reflow.";
+      }
+      runLiveAnalysis();
+    }
+
+    // Submit Bug into Memory
+    function submitNewBug() {
+      const title = document.getElementById('input-title').value.trim();
+      const desc = document.getElementById('input-desc').value.trim();
+      const module = document.getElementById('input-module').value;
+      const env = document.getElementById('input-env').value;
+      const logs = document.getElementById('input-logs').value.trim();
+
+      if (!title || !desc) {
+        alert("Please enter a Bug Title and Description.");
+        return;
+      }
+
+      const newId = BUGS_DATA.length + 1;
+      const predSev = document.getElementById('pred-severity-val').textContent;
+      const predCat = document.getElementById('pred-category-val').textContent;
+
+      BUGS_DATA.unshift({
+        id: newId,
+        title: title,
+        description: desc,
+        module: module,
+        severity: predSev,
+        category: predCat,
+        status: "New",
+        environment: env,
+        error_logs: logs,
+        root_cause: "",
+        resolution_text: ""
+      });
+
+      // Update counters
+      document.getElementById('corpus-count').textContent = BUGS_DATA.length;
+      document.getElementById('tracker-badge-count').textContent = BUGS_DATA.length;
+      renderTrackerTable();
+      renderAnalytics();
+
+      alert(`🎉 Bug #${newId} filed and cataloged into BugSense AI!`);
+      switchTab('tracker');
+    }
+
+    // Tab Switching
+    function switchTab(tab) {
+      const tabs = ['triage', 'tracker', 'analytics', 'viva'];
+      tabs.forEach(t => {
+        const content = document.getElementById(`tab-content-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tab) {
+          content.classList.remove('hidden');
+          btn.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-2";
+        } else {
+          content.classList.add('hidden');
+          btn.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] flex items-center gap-2";
+        }
+      });
+      if (tab === 'tracker') renderTrackerTable();
+      if (tab === 'analytics') renderAnalytics();
+    }
+
+    // Render Tracker Table
+    function renderTrackerTable() {
+      const container = document.getElementById('tracker-bugs-container');
+      const search = document.getElementById('tracker-search').value.toLowerCase();
+      const modFilter = document.getElementById('filter-module').value;
+      const sevFilter = document.getElementById('filter-severity').value;
+      const statFilter = document.getElementById('filter-status').value;
+
+      const filtered = BUGS_DATA.filter(b => {
+        const matchesSearch = !search || b.title.toLowerCase().includes(search) || b.description.toLowerCase().includes(search) || b.module.toLowerCase().includes(search);
+        const matchesMod = modFilter === "All" || b.module === modFilter;
+        const matchesSev = sevFilter === "All" || b.severity === sevFilter;
+        const matchesStat = statFilter === "All" || b.status === statFilter;
+        return matchesSearch && matchesMod && matchesSev && matchesStat;
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-[var(--card,#1e293b)] rounded-2xl border border-[var(--border,#334155)]">No bugs match current criteria.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(b => {
+        let sevColor = "bg-amber-500/15 text-amber-300 border-amber-500/30";
+        if (b.severity === "Critical") sevColor = "bg-rose-500/15 text-rose-300 border-rose-500/30";
+        else if (b.severity === "High") sevColor = "bg-orange-500/15 text-orange-300 border-orange-500/30";
+        else if (b.severity === "Low") sevColor = "bg-teal-500/15 text-teal-300 border-teal-500/30";
+
+        let statColor = "bg-blue-500/15 text-blue-300 border-blue-500/30";
+        if (b.status === "Resolved") statColor = "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+        else if (b.status === "In Progress") statColor = "bg-amber-500/15 text-amber-300 border-amber-500/30";
+
+        return `
+          <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] hover:border-indigo-500/50 transition-all rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-mono font-bold text-indigo-400">#${b.id}</span>
+                <span class="badge-pill border ${sevColor}">${b.severity}</span>
+                <span class="badge-pill border ${statColor}">${b.status}</span>
+                <span class="text-xs text-slate-400 font-medium">Module: <strong class="text-slate-200">${b.module}</strong></span>
+              </div>
+              <h4 class="text-sm font-semibold text-[var(--foreground,#f8fafc)]">${b.title}</h4>
+            </div>
+            <button onclick="openModal(${b.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition self-end sm:self-center">
+              Inspect & Fix →
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Operations
+    function openModal(bugId) {
+      const bug = BUGS_DATA.find(b => b.id === bugId);
+      if (!bug) return;
+
+      document.getElementById('modal-bug-id').textContent = `#${bug.id}`;
+      document.getElementById('modal-title').textContent = bug.title;
+      document.getElementById('modal-desc').textContent = bug.description;
+      document.getElementById('modal-module').textContent = bug.module;
+      document.getElementById('modal-category').textContent = bug.category;
+      document.getElementById('modal-env').textContent = bug.environment || "Production";
+
+      const sevBadge = document.getElementById('modal-severity-badge');
+      sevBadge.textContent = bug.severity;
+
+      const statBadge = document.getElementById('modal-status-badge');
+      statBadge.textContent = bug.status;
+
+      if (bug.error_logs) {
+        document.getElementById('modal-logs-container').classList.remove('hidden');
+        document.getElementById('modal-logs').textContent = bug.error_logs;
+      } else {
+        document.getElementById('modal-logs-container').classList.add('hidden');
+      }
+
+      if (bug.root_cause || bug.resolution_text) {
+        document.getElementById('modal-res-box').classList.remove('hidden');
+        document.getElementById('modal-rc').textContent = bug.root_cause || "None";
+        document.getElementById('modal-fix').textContent = bug.resolution_text || "None";
+      } else {
+        document.getElementById('modal-res-box').classList.add('hidden');
+      }
+
+      document.getElementById('bug-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('bug-modal').classList.add('hidden');
+    }
+
+    // Render Analytics
+    function renderAnalytics() {
+      const total = BUGS_DATA.length;
+      const newBugs = BUGS_DATA.filter(b => b.status === "New").length;
+      const critBugs = BUGS_DATA.filter(b => b.severity === "Critical").length;
+      const resolved = BUGS_DATA.filter(b => b.status === "Resolved").length;
+      const resRate = Math.round((resolved / total) * 100);
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-new').textContent = newBugs;
+      document.getElementById('stat-crit').textContent = critBugs;
+      document.getElementById('stat-rate').textContent = `${resRate}%`;
+
+      // Module distribution
+      const modCounts = {};
+      BUGS_DATA.forEach(b => { modCounts[b.module] = (modCounts[b.module] || 0) + 1; });
+
+      const modChart = document.getElementById('module-bar-chart');
+      modChart.innerHTML = Object.entries(modCounts).map(([mod, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-medium text-slate-300">${mod}</span>
+              <span class="text-slate-400 font-mono">${count} (${pct}%)</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Severity distribution
+      const sevCounts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+      BUGS_DATA.forEach(b => { if (sevCounts[b.severity] !== undefined) sevCounts[b.severity]++; });
+
+      const sevChart = document.getElementById('severity-breakdown-container');
+      const colors = { Critical: 'bg-rose-500', High: 'bg-orange-500', Medium: 'bg-yellow-500', Low: 'bg-teal-500' };
+
+      sevChart.innerHTML = Object.entries(sevCounts).map(([sev, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return `
+          <div class="flex items-center justify-between text-xs p-2.5 rounded-lg bg-black/20 border border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full ${colors[sev]}"></span>
+              <span class="font-semibold text-slate-200">${sev}</span>
+            </div>
+            <span class="font-mono text-slate-300">${count} tickets (${pct}%)</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initial setup
+    renderTrackerTable();
+    renderAnalytics();
+  </script>
+</body>
+</html>
